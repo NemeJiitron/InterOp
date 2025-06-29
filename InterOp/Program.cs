@@ -282,10 +282,50 @@ namespace InterOp
 
             #endregion
 
-           
+            Console.WriteLine("Enter encryption key: ");
+            int key = int.Parse(Console.ReadLine());
+
+            Stopwatch stopwatch = new Stopwatch();
+
+            string folderPath = "C:\\ItStep\\.NET (C#)\\.NET project\\InterOp\\InterOp\\bin\\Debug\\net9.0";
+            List<Task> tasks = new List<Task>();
+
+
+            stopwatch.Start();
+
+            string[] files = Directory.GetFiles(folderPath, "*.txt", SearchOption.AllDirectories);
+            Console.WriteLine("Files: ");
+            foreach (string file in files)
+            {
+                Console.WriteLine("\n" + file);
+            }
+            foreach (var file in files)
+            {
+                ThreadPool.QueueUserWorkItem(state =>
+                {
+                    var task = EncryptFileAsync(file, key);
+                    tasks.Add(task);
+                });
+            }
+
+            await Task.WhenAll(tasks);
+
+            stopwatch.Stop();
+
+            Console.WriteLine("\nDone");
+            Console.WriteLine($"File count: {files.Length}");
+            Console.WriteLine($"Time: {stopwatch.Elapsed.TotalSeconds} sec");
         }
 
-        
+        static async Task<Task> EncryptFileAsync(string path, int key)
+        {
+            Console.WriteLine($"Encrypting File: {path} ");
+            string text = File.ReadAllText(path);
+            StringBuilder encrypted = new StringBuilder();
+            text.ToList<char>().ForEach(c => encrypted.Append((char)(c + key)));
+            return File.WriteAllTextAsync(path, encrypted.ToString());
+
+        }
 
         static async Task SimulateWorkAsync(string name, int delayMs)
         {
