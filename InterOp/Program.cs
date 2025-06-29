@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Management;
 using System.Reflection;
 using InterOp.HomeWork;
+using System.Reflection.Metadata;
 
 namespace InterOp
 {
@@ -154,10 +155,58 @@ namespace InterOp
             //Console.ReadKey();
             //Console.WriteLine("Thread resumed");
             #endregion
-            
 
+            Console.WriteLine("Encrypting key: ");
+            int key = int.Parse(Console.ReadLine());
+            Dictionary<Thread, string> dict = new Dictionary<Thread, string>();
+
+            while (true)
+            {
+                string Path = string.Empty;
+                Console.WriteLine("Add file path - 1\n Start encryption - 2\n 0 - Quit");
+                string choice = Console.ReadLine();
+                switch (choice)
+                {
+                    case "1":
+                        Console.WriteLine("Path: ");
+                        Path = Console.ReadLine();
+                        dict.Add(new Thread((p) => EncryptFile((string)p, key)), Path);
+                        break;
+                    case "2":
+                        if (dict.Count == 0)
+                        {
+                            Console.WriteLine("Dict is empty");
+                            break;
+                        }
+                        foreach (Thread trd in dict.Keys)
+                        {
+                            string path = dict[trd];
+                            trd.Start(path);
+                            Console.WriteLine($"{path} encrypting started. Thread hash-code: {trd.GetHashCode()}");
+                        }
+                        break;
+                    default:
+                        Console.WriteLine("incorrect input");
+                        break;
+                }
+                if (choice == "0")
+                    break;
+            }
         }
 
+        private static void EncryptFile(string path, int key)
+        {
+            StringBuilder sb = new StringBuilder();
+            using (StreamReader sw = new StreamReader(path))
+            {
+                List<char> encryptedChars = sw.ReadToEnd().ToList<char>();
+                encryptedChars.ForEach(ch => sb.Append((char)(ch + key)));
+            }
+            using(StreamWriter sw = new StreamWriter(path))
+            {
+                sw.WriteLine(sb.ToString());
+            }
+        }
 
         static void MethodWithParams(string msg)
         {
